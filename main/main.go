@@ -30,7 +30,8 @@ func main() {
 	}()
 
 	time.Sleep(time.Second)
-
+	
+	//将defaultOption转换为json后，写入conn，然后利用gob进行编解码
 	_ = json.NewEncoder(conn).Encode(geerpc.DefaultOption)
 	cc := codec.NewGobCodec(conn)
 	for i := 0; i < 5; i++ {
