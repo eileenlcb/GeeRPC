@@ -7,6 +7,7 @@ import (
 	"geerpc/codec"
 	"log"
 	"net"
+	"net/http"
 	"time"
 )
 
@@ -23,6 +24,10 @@ func startServer(addr chan string) {
 func main() {
 	addr := make(chan string)
 	go startServer(addr)
+
+	// go func() {
+	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
 
 	conn, _ := net.Dial("tcp", <-addr)
 	defer func() {

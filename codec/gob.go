@@ -14,7 +14,9 @@ type GobCodec struct {
 	enc  *gob.Encoder
 }
 
-// 验证GobCodec是否实现了Codec接口
+// 会在编译阶段验证GobCodec是否实现了Codec接口
+// 类型转换: (*GobCodec)(nil) 将 nil 强制转换为 *GobCodec 类型的指针。因为 nil 是零值，这不会有任何实际运行时效果。
+// 赋值: 试图将这个 nil 的 *GobCodec 赋值给接口类型 Codec。这时，编译器会检查 *GobCodec 是否实现了 Codec 接口。如果没有实现，则编译器会报错。
 var _ Codec = (*GobCodec)(nil)
 
 func NewGobCodec(conn io.ReadWriteCloser) Codec {
