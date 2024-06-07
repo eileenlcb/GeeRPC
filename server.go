@@ -49,6 +49,7 @@ func (server *Server) ServerConn(conn io.ReadWriteCloser) {
 		_ = conn.Close()
 	}()
 	var opt Option
+	//反序列化Option实例，判断MagicNumber和CodecType是否合法
 	if err := json.NewDecoder(conn).Decode(&opt); err != nil {
 		log.Println("rpc server: options error:", err)
 		return
@@ -57,6 +58,7 @@ func (server *Server) ServerConn(conn io.ReadWriteCloser) {
 		log.Printf("rpc server: invalid magic number %x", opt.MagicNumber)
 		return
 	}
+	//根据CodecType获取对应的编解码器，然后调用serveCodec
 	f := codec.NewCodecFuncMap[opt.CodecType]
 	if f == nil {
 		log.Printf("rpc server: invalid codec type %s", opt.CodecType)
