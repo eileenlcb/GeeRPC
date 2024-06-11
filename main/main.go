@@ -7,7 +7,6 @@ import (
 	"geerpc/codec"
 	"log"
 	"net"
-	"net/http"
 	"time"
 )
 
