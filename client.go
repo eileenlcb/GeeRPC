@@ -194,3 +194,24 @@ func (client *Client) send(call *Call) {
 		}
 	}
 }
+
+func (client *Client) Go(ServiceMethod string, args, reply interface{}, done chan *Call) *Call {
+	if done == nil {
+		done = make(chan *Call, 10)
+	} else if cap(done) == 0 {
+		log.Panic("done channel is unbuffered")
+	}
+	call := &Call{
+		ServiceMethod: ServiceMethod,
+		Args:          args,
+		Reply:         reply,
+		Done:          done,
+	}
+	client.send(call)
+	return call
+}
+
+func (client *Client) Call(ServiceMethod string, args, reply interface{}) error {
+	call := <-client.Go(ServiceMethod, args, reply, nil).Done
+	return call.Error
+}
