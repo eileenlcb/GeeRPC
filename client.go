@@ -185,7 +185,7 @@ func (client *Client) send(call *Call) {
 	client.header.ServiceMethod = call.ServiceMethod
 	client.header.Seq = seq
 	client.header.Error = ""
-
+	//args就是“”geerpc req %d””
 	if err := client.cc.Write(&client.header, call.Args); err != nil {
 		call := client.removeCall(seq)
 		if call != nil {
