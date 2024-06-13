@@ -207,11 +207,13 @@ func (client *Client) Go(ServiceMethod string, args, reply interface{}, done cha
 		Reply:         reply,
 		Done:          done,
 	}
+	//有一个关于是否异步发送的讨论:https://github.com/golang/go/pull/42183
 	client.send(call)
 	return call
 }
 
 func (client *Client) Call(ServiceMethod string, args, reply interface{}) error {
-	call := <-client.Go(ServiceMethod, args, reply, nil).Done
+	//Done为一个channel
+	call := <-client.Go(ServiceMethod, args, reply, make(chan *Call, 1)).Done
 	return call.Error
 }
