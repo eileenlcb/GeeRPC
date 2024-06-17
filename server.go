@@ -9,7 +9,6 @@ import (
 	"net"
 	"reflect"
 	"sync"
-	"sync/atomic"
 )
 
 const MagicNumber = 0x3bef5c
