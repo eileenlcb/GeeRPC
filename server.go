@@ -58,7 +58,8 @@ func (server *Server) ServerConn(conn io.ReadWriteCloser) {
 		log.Printf("rpc server: invalid magic number %x", opt.MagicNumber)
 		return
 	}
-	//根据CodecType获取对应的编解码器，然后调用serveCodec
+	//根据CodecType获取对应的编解码器，返回的是NewGobCodec这个构造函数
+	//NewGobCodec返回GobCodec实例，实现了Codec接口
 	f := codec.NewCodecFuncMap[opt.CodecType]
 	if f == nil {
 		log.Printf("rpc server: invalid codec type %s", opt.CodecType)
@@ -111,7 +112,9 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 		return nil, err
 	}
 	req := &request{h: h}
+	//返回一个指向新建的空string类型的指针
 	req.argv = reflect.New(reflect.TypeOf(""))
+	//通过传入Interface()，即*string类型的接口，然后通过ReadBody方法将数据读取到argv中
 	if err = cc.ReadBody(req.argv.Interface()); err != nil {
 		log.Println("rpc server: read body error:", err)
 		return nil, err
