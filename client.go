@@ -39,6 +39,7 @@ type Client struct {
 var _ io.Closer = (*Client)(nil)
 var ErrShutdown = errors.New("connection is shut down")
 
+// 需要用户主动关闭连接，否则认为是错误发生
 func (client *Client) Close() error {
 	client.mu.Lock()
 	defer client.mu.Unlock()
@@ -46,6 +47,7 @@ func (client *Client) Close() error {
 		return ErrShutdown
 	}
 	client.closing = true
+	//cc.Close()是一个io.Closer接口,会使conn关闭,返回值是error
 	return client.cc.Close()
 }
 
@@ -91,9 +93,10 @@ func (client *Client) receive() {
 		}
 		call := client.removeCall(h.Seq)
 		switch {
+		//call不存在，可能是请求没有发送完整，或者其他原因取消
 		case call == nil:
-			//call已经被移除
 			err = client.cc.ReadBody(nil)
+		//call存在，但是服务端处理出错
 		case h.Error != "":
 			call.Error = fmt.Errorf(h.Error)
 			err = client.cc.ReadBody(nil)
@@ -117,7 +120,7 @@ func NewClient(conn net.Conn, opt *Option) (*Client, error) {
 		log.Println("rpc client: codec error:", err)
 		return nil, err
 	}
-
+	//通过json编码器将opt编码后，通过conn发送给服务端
 	if err := json.NewEncoder(conn).Encode(opt); err != nil {
 		log.Println("rpc client: options error:", err)
 		_ = conn.Close()
@@ -137,6 +140,7 @@ func newClientCodec(cc codec.Codec, opt *Option) *Client {
 	return client
 }
 
+// 方便用户传入服务端地址，因此设置为可变参数
 func parseOptions(opts ...*Option) (*Option, error) {
 	if len(opts) == 0 || opts[0] == nil {
 		return DefaultOption, nil
