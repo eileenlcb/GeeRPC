@@ -39,9 +39,11 @@ func main() {
 	m := &methodType{method: exampleMethod}
 
 	argv := reflect.ValueOf(42)
-	replyv := reflect.New(reflect.TypeOf(0)).Elem()
+	// 创建指针类型的 reflect.Value
+	replyv := reflect.New(reflect.TypeOf(0)).Elem().Addr()
 
 	err := srv.call(m, argv, replyv)
 	fmt.Println("Error:", err)
-	fmt.Println("Reply:", replyv.Int())
+	// 获取指针指向的值
+	fmt.Println("Reply:", replyv.Elem().Int())
 }
