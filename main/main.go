@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type Foo int
+type Args struct {
+	Num1, Num2 int
+}
+
 func startServer(addr chan string) {
 	l, err := net.Listen("tcp", ":0")
 	if err != nil {
