@@ -23,7 +23,10 @@ var DefaultOption = &Option{
 	CodecType:   codec.GobType,
 }
 
-type Server struct{}
+type Server struct {
+	//线程安全的map
+	serviceMap sync.Map
+}
 
 func NewServer() *Server {
 	return &Server{}
@@ -136,3 +139,13 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	req.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", req.h.Seq))
 	server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
 }
+
+func (server *Server) Register(rcvr interface{}) error {
+	s := newService(rcvr)
+	if _, dup := server.serviceMap.LoadOrStore(s.name, s); dup {
+		return fmt.Errorf("rpc: service already defined: %s", s.name)
+	}
+	return nil
+}
+
+fun Register(rcvr interface{}) error { return DefaultServer.Register(rcvr) }

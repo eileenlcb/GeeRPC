@@ -62,7 +62,7 @@ func newService(rcvr interface{}) *service {
 	s.rcvr = reflect.ValueOf(rcvr)
 	s.name = reflect.Indirect(s.rcvr).Type().Name()
 	s.typ = reflect.TypeOf(rcvr)
-	if ast.IsExported(s.name) {
+	if !ast.IsExported(s.name) {
 		log.Fatal("rpc server: ", s.name, " is not a valid service name")
 	}
 	s.registerMethods()
@@ -71,7 +71,7 @@ func newService(rcvr interface{}) *service {
 
 func (s *service) registerMethods() {
 	s.method = make(map[string]*methodType)
-	for i := 0; i < s.typ.NumField(); i++ {
+	for i := 0; i < s.typ.NumMethod(); i++ {
 		method := s.typ.Method(i)
 		mType := method.Type
 		//作为rpc调用，包含自身在内，numIn必须为3（自身/导出的方法/返回值指针）;numOut必须为1（error返回值）
