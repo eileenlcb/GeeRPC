@@ -8,7 +8,10 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"strings"
 	"sync"
+
+	"github.com/juju/errors"
 )
 
 const MagicNumber = 0x3bef5c
@@ -142,10 +145,30 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 
 func (server *Server) Register(rcvr interface{}) error {
 	s := newService(rcvr)
+	//如果已经存储了值，则返回true,否则存储值并返回false
 	if _, dup := server.serviceMap.LoadOrStore(s.name, s); dup {
 		return fmt.Errorf("rpc: service already defined: %s", s.name)
 	}
 	return nil
 }
 
-fun Register(rcvr interface{}) error { return DefaultServer.Register(rcvr) }
+func Register(rcvr interface{}) error { return DefaultServer.Register(rcvr) }
+
+func (server *Server) findService(serviceMethod string) (svc *service, mtype *methodType, err error) {
+	dot := strings.LastIndex(serviceMethod, ".")
+	if dot < 0 {
+		err = errors.New("rpc: service/method request ill-formed: " + serviceMethod)
+		return
+	}
+	serviceName, methodName := serviceMethod[:dot], serviceMethod[dot+1:]
+	svci, ok := server.serviceMap.Load(serviceName)
+	if !ok {
+		err = errors.New("rpc: can't find service " + serviceName)
+		return
+	}
+	svc = svci.(*service)
+	mtype = svc.method[methodName]
+	if mtype == nil {
+		err = errors.New("rpc: can't find method " + methodName)
+	}
+}
