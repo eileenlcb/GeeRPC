@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/juju/errors"
+	"errors"
 )
 
 const MagicNumber = 0x3bef5c
@@ -99,6 +99,8 @@ func (server *Server) serveCodec(cc codec.Codec) {
 type request struct {
 	h            *codec.Header
 	argv, replyv reflect.Value
+	mtype        *methodType
+	svc          *service
 }
 
 func (server *Server) readRequestHeader(cc codec.Codec) (*codec.Header, error) {
@@ -118,12 +120,21 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 		return nil, err
 	}
 	req := &request{h: h}
-	//返回一个指向新建的空string类型的指针
-	req.argv = reflect.New(reflect.TypeOf(""))
-	//通过传入Interface()，即*string类型的接口，然后通过ReadBody方法将数据读取到argv中
-	if err = cc.ReadBody(req.argv.Interface()); err != nil {
-		log.Println("rpc server: read body error:", err)
-		return nil, err
+
+	req.svc, req.mtype, err = server.findService(h.ServiceMethod)
+	if err != nil {
+		return req, err
+	}
+	req.argv = req.mtype.newArgv()
+	req.replyv = req.mtype.newReplyv()
+
+	argvi := req.argv.Interface()
+	if req.argv.Type().Kind() != reflect.Ptr {
+		argvi = req.argv.Addr().Interface()
+	}
+	if err := cc.ReadBody(argvi); err != nil {
+		log.Println("rpc server: read argv err:", err)
+		return req, err
 	}
 	return req, nil
 }
@@ -138,8 +149,12 @@ func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interfa
 
 func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Println(req.h, req.argv.Elem())
-	req.replyv = reflect.ValueOf(fmt.Sprintf("geerpc resp %d", req.h.Seq))
+	err := req.svc.call(req.mtype, req.argv, req.replyv)
+	if err != nil {
+		req.h.Error = err.Error()
+		server.sendResponse(cc, req.h, invalidRequest, sending)
+		return
+	}
 	server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
 }
 
@@ -171,4 +186,5 @@ func (server *Server) findService(serviceMethod string) (svc *service, mtype *me
 	if mtype == nil {
 		err = errors.New("rpc: can't find method " + methodName)
 	}
+	return
 }
