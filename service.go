@@ -57,6 +57,13 @@ func (m *methodType) newReplyv() reflect.Value {
 	return replyv
 }
 
+// 创建一个service实例，包含服务名、服务类型、服务实例、服务方法
+//	type service struct {
+//	    name   string
+//	    typ    reflect.Type
+//	    rcvr   reflect.Value
+//	    method map[string]*methodType
+//	}
 func newService(rcvr interface{}) *service {
 	s := new(service)
 	s.rcvr = reflect.ValueOf(rcvr)

@@ -170,6 +170,7 @@ func (server *Server) Register(rcvr interface{}) error {
 func Register(rcvr interface{}) error { return DefaultServer.Register(rcvr) }
 
 func (server *Server) findService(serviceMethod string) (svc *service, mtype *methodType, err error) {
+	//serviceMethod: "Foo.Sum"
 	dot := strings.LastIndex(serviceMethod, ".")
 	if dot < 0 {
 		err = errors.New("rpc: service/method request ill-formed: " + serviceMethod)
