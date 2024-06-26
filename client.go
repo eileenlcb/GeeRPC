@@ -42,6 +42,7 @@ type clientResult struct {
 	err    error
 }
 
+// 实际上就是抽象了下NewClient函数，方便后续扩展
 type newClientFunc func(conn net.Conn, opt *Option) (client *Client, err error)
 
 var _ io.Closer = (*Client)(nil)
@@ -246,6 +247,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 	}()
 	ch := make(chan clientResult)
 	go func() {
+		//这里实际上就是调用NewClient函数
 		client, err := f(conn, opt)
 		ch <- clientResult{client: client, err: err}
 	}()
