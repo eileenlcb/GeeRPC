@@ -1,6 +1,7 @@
 package geerpc
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -265,4 +266,8 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 
 func Dial(network, address string, opts ...*Option) (*Client, error) {
 	return dialTimeout(NewClient, network, address, opts...)
+}
+
+func (client *Client) Call(ctx context.Context,serviceMethod string,args,reply interface{}) error{
+
 }
