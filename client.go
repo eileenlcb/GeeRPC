@@ -268,6 +268,6 @@ func Dial(network, address string, opts ...*Option) (*Client, error) {
 	return dialTimeout(NewClient, network, address, opts...)
 }
 
+//todo
 func (client *Client) Call(ctx context.Context,serviceMethod string,args,reply interface{}) error{
-
 }
