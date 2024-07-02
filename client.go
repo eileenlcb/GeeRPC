@@ -268,14 +268,14 @@ func Dial(network, address string, opts ...*Option) (*Client, error) {
 	return dialTimeout(NewClient, network, address, opts...)
 }
 
-//todo
-func (client *Client) Call(ctx context.Context,serviceMethod string,args,reply interface{}) error{
-	// call:=client.Go(serviceMethod,args,reply,nil)
-	// select{
-	// case<-ctx.Done():
-	// 	client.removeCall(call.Seq)
-	// 	return errors.New("rpc client: call failed: "+ctx.Err().Error())
-	// case<-call.Done:
-	// 	return call.Error
-	// }
+// todo
+func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
+	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
+	select {
+	case <-ctx.Done():
+		client.removeCall(call.Seq)
+		return errors.New("rpc client: call failed: " + ctx.Err().Error())
+	case call := <-call.Done:
+		return call.Error
+	}
 }
