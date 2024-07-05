@@ -2,6 +2,7 @@ package geerpc
 
 import (
 	"net"
+	"testing"
 	"time"
 )
 
@@ -19,4 +20,8 @@ func startServer(addr chan string) {
 	l, _ := net.Listen("tcp", ":0")
 	addr <- l.Addr().String()
 	Accept(l)
+}
+
+func TestClient_dialTimeout(t *testing.T) {
+	t.Parallel()
 }
