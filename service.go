@@ -26,14 +26,14 @@ func (m *methodType) NumCalls() uint64 {
 	return atomic.LoadUint64(&m.numCalls)
 }
 
-// reflect相关解释：
-// reflect.New: 返回一个Value类型，该类型包含一个指向类型为typ的新申请的零值
-// reflect.Value:反射包中一个代表Go值的通用容器，可以操作任意类型的值
+// 两种argv类型：值类型和指针类型，example输出：
+// Pointer type: 0x140000a2018, Type: *int
+// Value type: 0, Type: int
 func (m *methodType) newArgv() reflect.Value {
 	var argv reflect.Value
-	//两种argv类型：值类型和指针类型，example输出：
-	// Pointer type: 0x140000a2018, Type: *int
-	// Value type: 0, Type: int
+	// reflect相关解释：
+	// reflect.New: 返回一个Value类型，该类型包含一个指向类型为typ的新申请的零值
+	// reflect.Value:反射包中一个代表Go值的通用容器，可以操作任意类型的值
 	// 指针类型和值类型创建实例的方式有细微区别
 	if m.ArgType.Kind() == reflect.Ptr {
 		argv = reflect.New(m.ArgType.Elem())
@@ -44,8 +44,8 @@ func (m *methodType) newArgv() reflect.Value {
 	return argv
 }
 
+// reply必须是指针类型
 func (m *methodType) newReplyv() reflect.Value {
-	// reply必须是指针类型
 	// 指向m.ReplyType.elem()实例的指针
 	replyv := reflect.New(m.ReplyType.Elem())
 	switch m.ReplyType.Elem().Kind() {
@@ -57,6 +57,13 @@ func (m *methodType) newReplyv() reflect.Value {
 	return replyv
 }
 
+// 创建一个service实例，包含服务名、服务类型、服务实例、服务方法
+//	type service struct {
+//	    name   string
+//	    typ    reflect.Type
+//	    rcvr   reflect.Value
+//	    method map[string]*methodType
+//	}
 func newService(rcvr interface{}) *service {
 	s := new(service)
 	s.rcvr = reflect.ValueOf(rcvr)
