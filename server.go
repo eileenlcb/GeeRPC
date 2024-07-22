@@ -214,3 +214,5 @@ func (server *Server) findService(serviceMethod string) (svc *service, mtype *me
 	}
 	return
 }
+
+//todo:add timeout
