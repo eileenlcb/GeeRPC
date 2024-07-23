@@ -75,12 +75,12 @@ func (server *Server) ServerConn(conn io.ReadWriteCloser) {
 		log.Printf("rpc server: invalid codec type %s", opt.CodecType)
 		return
 	}
-	server.serveCodec(f(conn))
+	server.serveCodec(f(conn), &opt)
 }
 
 var invalidRequest = struct{}{}
 
-func (server *Server) serveCodec(cc codec.Codec) {
+func (server *Server) serveCodec(cc codec.Codec, opt *Option) {
 	sending := new(sync.Mutex)
 	wg := new(sync.WaitGroup)
 	for {
@@ -94,7 +94,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 			continue
 		}
 		wg.Add(1)
-		go server.handleRequest(cc, req, sending, wg)
+		go server.handleRequest(cc, req, sending, wg, opt.HandleTimeout)
 	}
 	wg.Wait()
 	_ = cc.Close()
@@ -151,7 +151,7 @@ func (server *Server) sendResponse(cc codec.Codec, h *codec.Header, body interfa
 	}
 }
 
-func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup timeout time.Duration) {
+func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup, timeout time.Duration) {
 	defer wg.Done()
 
 	called := make(chan struct{})
@@ -159,7 +159,7 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 	go func() {
 		err := req.svc.call(req.mtype, req.argv, req.replyv)
 		called <- struct{}{}
-		if err!=nil{
+		if err != nil {
 			req.h.Error = err.Error()
 			server.sendResponse(cc, req.h, invalidRequest, sending)
 			sent <- struct{}{}

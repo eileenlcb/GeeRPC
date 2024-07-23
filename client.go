@@ -242,6 +242,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 	if err != nil {
 		return nil, err
 	}
+	//在指定时间内连接不上，返回错误
 	conn, err := net.DialTimeout(network, address, opt.ConnectTimeout)
 	if err != nil {
 		return nil, err
@@ -253,7 +254,7 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 	}()
 	ch := make(chan clientResult)
 	go func() {
-		//这里实际上就是调用NewClient函数
+		//这里实际上就是调用NewClient函数，即newClientFunc类型的函数来创建Client对象
 		client, err := f(conn, opt)
 		ch <- clientResult{client: client, err: err}
 	}()
@@ -271,16 +272,4 @@ func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (cli
 
 func Dial(network, address string, opts ...*Option) (*Client, error) {
 	return dialTimeout(NewClient, network, address, opts...)
-}
-
-// todo
-func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
-	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
-	select {
-	case <-ctx.Done():
-		client.removeCall(call.Seq)
-		return errors.New("rpc client: call failed: " + ctx.Err().Error())
-	case call := <-call.Done:
-		return call.Error
-	}
 }
