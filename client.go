@@ -226,10 +226,15 @@ func (client *Client) Go(ServiceMethod string, args, reply interface{}, done cha
 	return call
 }
 
-func (client *Client) Call(ServiceMethod string, args, reply interface{}) error {
-	//Done为一个channel
-	call := <-client.Go(ServiceMethod, args, reply, make(chan *Call, 1)).Done
-	return call.Error
+func (client *Client) Call(ctx context.Context, serviceMethod string, args, reply interface{}) error {
+	call := client.Go(serviceMethod, args, reply, make(chan *Call, 1))
+	select {
+	case <-ctx.Done():
+		client.removeCall(call.Seq)
+		return errors.New("rpc client: call failed: " + ctx.Err().Error())
+	case call := <-call.Done:
+		return call.Error
+	}
 }
 
 func dialTimeout(f newClientFunc, network, address string, opts ...*Option) (client *Client, err error) {
