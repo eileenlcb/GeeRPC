@@ -25,7 +25,7 @@ func startServer(addr chan string) {
 }
 
 func TestClient_dialTimeout(t *testing.T) {
-	//并行测试，其他测试用例会同时执行
+	//并行测试，其他子测试用例会同时执行
 	t.Parallel()
 	l, _ := net.Listen("tcp", ":0")
 	// addr := make(chan string)
